@@ -21,7 +21,7 @@ public class Lamina extends JPanel implements ActionListener {
         add(cuadrado); // Añadimos el cuadro de texto
 
         // INICIALIZAMOS EL ARRAY DE LOS BOTONES
-        botones = new JButton[10];
+        botones = new JButton[17];
 
         // CONFIGURAMOS LOS BOTONES MANUALMENTE
         botones[0] = crearBoton("0", 10, 300, 100, 50);
@@ -34,6 +34,15 @@ public class Lamina extends JPanel implements ActionListener {
         botones[7] = crearBoton("7", 10, 120, 100, 50);
         botones[8] = crearBoton("8", 120, 120, 100, 50);
         botones[9] = crearBoton("9", 230, 120, 100, 50);
+
+        // Botones de operaciones ajustados a la derecha
+        botones[10] = crearBoton("-", 800, 120, 150, 50);
+        botones[11] = crearBoton("+", 800, 180, 150, 50);
+        botones[12] = crearBoton("*", 800, 240, 150, 50);
+        botones[13] = crearBoton("/", 800, 300, 150, 50);
+        botones[14] = crearBoton("=", 800, 360, 150, 50);
+        botones[15] = crearBoton("Borrar", 800, 480, 150, 50);
+        botones[16] = crearBoton(",", 800, 420, 150, 50);
 
         // REGISTRAMOS LOS EVENTOS DE LOS BOTONES
         for (JButton boton : botones) {
@@ -65,12 +74,16 @@ public class Lamina extends JPanel implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        // VERIFICA QUE BOTON SE PULSA
-        for (int i = 0; i < botones.length; i++) {
-            if (e.getSource() == botones[i]) {
-                cuadrado.setText(cuadrado.getText() + i);   // AÑADE EL NÚMERO AL CUADRO
+        // Iteramos por los botones para identificar cuál se pulsó
+        for (JButton boton : botones) {
+            if (boton != null && e.getSource() == boton) { // Verifica que el botón no sea nulo
+                // Obtenemos el texto del botón pulsado
+                String textoBoton = boton.getText();
+                // Añadimos ese texto al cuadro de texto
+                cuadrado.setText(cuadrado.getText() + textoBoton);
                 break;
             }
         }
     }
-}
+}    
+
