@@ -2,31 +2,34 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 public class Lamina extends JPanel implements ActionListener {
-    private JTextField cuadrado; // CUADRO DE TEXTO
-    private JButton[] botones;  // ARRAY PARA LOS BOTONES
-    private String operacionActual = ""; // Operación en curso
-    private double primerNumero = 0;    // Primer número ingresado
+    private JTextField cuadrado; // Cuadro de texto
+    private JButton[] botones;  // Array de botones
+    private String operacionActual = ""; // Operación actual
+    private double primerNumero = 0; // Primer número ingresado
+    private String modoActual = "Teclado y Ratón"; // Modo inicial por defecto
 
     public Lamina() {
         setLayout(null); // Configuramos el layout manualmente
 
-        // CUADRO DE TEXTO
+        // Cuadro de texto
         cuadrado = new JTextField();
         cuadrado.setBounds(5, 5, 950, 100); // Dimensiones
         cuadrado.setEditable(false); // Deshabilitamos la edición manual
         cuadrado.setFont(new Font("Arial", Font.BOLD, 30)); // Fuente grande
         add(cuadrado); // Añadimos el cuadro de texto
 
-        // INICIALIZAMOS EL ARRAY DE LOS BOTONES
-        botones = new JButton[17];
+        // Inicializamos el array de botones
+        botones = new JButton[20];
 
-        // CONFIGURAMOS LOS BOTONES MANUALMENTE
+        // Configuramos los botones manualmente
         botones[0] = crearBoton("0", 230, 480, 200, 50);
         botones[1] = crearBoton("1", 20, 420, 200, 50);
         botones[2] = crearBoton("2", 230, 420, 200, 50);
@@ -44,14 +47,39 @@ public class Lamina extends JPanel implements ActionListener {
         botones[12] = crearBoton("*", 800, 240, 150, 50);
         botones[13] = crearBoton("/", 800, 300, 150, 50);
         botones[14] = crearBoton("=", 650, 480, 300, 50);
-        botones[15] = crearBoton("Borrar", 800, 420, 150, 50);
-        botones[16] = crearBoton(".", 800, 360, 150, 50);
+        botones[15] = crearBoton("Borrar", 20, 120, 150, 50);
+        botones[16] = crearBoton(".", 465, 480, 150, 50);
 
-        // REGISTRAMOS LOS EVENTOS DE LOS BOTONES
+        // Modos de la calculadora
+        botones[17] = crearBoton("Ratón", 635, 120, 150, 50);
+        botones[18] = crearBoton("Teclado y raton", 185, 120, 270, 50);
+        botones[19] = crearBoton("Teclado", 470, 120, 150, 50);
+
+        // Registramos los eventos de los botones
         for (JButton boton : botones) {
             boton.addActionListener(this);
             add(boton);
         }
+
+        // Habilitar el uso del teclado
+        setFocusable(true);
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (modoActual.equals("Ratón")) return; // Ignora entradas de teclado en modo Ratón
+
+                char tecla = e.getKeyChar();
+                if (Character.isDigit(tecla)) {
+                    cuadrado.setText(cuadrado.getText() + tecla);
+                } else if (tecla == '+' || tecla == '-' || tecla == '*' || tecla == '/') {
+                    actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, String.valueOf(tecla)));
+                } else if (tecla == KeyEvent.VK_ENTER) {
+                    actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "="));
+                } else if (tecla == KeyEvent.VK_BACK_SPACE) {
+                    cuadrado.setText("");
+                }
+            }
+        });
     }
 
     /** Método auxiliar para crear botones con propiedades personalizadas. */
@@ -74,35 +102,42 @@ public class Lamina extends JPanel implements ActionListener {
         for (JButton boton : botones) {
             if (boton != null && e.getSource() == boton) {
                 String textoBoton = boton.getText();
-    
+
+                // Manejo de modos
+                if (textoBoton.equals("Ratón")) {
+                    modoActual = "Ratón";
+                    cuadrado.setText("Modo: Solo Ratón");
+                    return;
+                } else if (textoBoton.equals("Teclado y raton")) {
+                    modoActual = "Teclado y Ratón";
+                    cuadrado.setText("Modo: Teclado y Ratón");
+                    return;
+                } else if (textoBoton.equals("Teclado")) {
+                    modoActual = "Teclado";
+                    cuadrado.setText("Modo: Solo Teclado");
+                    return;
+                }
+
+                // Ignorar eventos según el modo actual
+                if (modoActual.equals("Teclado") && !(e.getSource() instanceof JButton)) return;
+
+                // Lógica principal
                 if (textoBoton.matches("\\d")) { // Si es un número
                     cuadrado.setText(cuadrado.getText() + textoBoton);
                 } else if (textoBoton.equals(".")) { // Si es un punto decimal
                     String textoActual = cuadrado.getText();
-                    // Dividimos el texto por espacios y verificamos el último número
-                    String[] partes = textoActual.split(" ");
-                    if (partes.length == 0 || !partes[partes.length - 1].contains(".")) {
-                        // Solo añadimos el punto si el último número no tiene ya un punto
+                    if (!textoActual.contains(".")) {
                         cuadrado.setText(textoActual + textoBoton);
                     }
                 } else if (textoBoton.matches("[+\\-*/]")) { // Si es una operación
-                    if (!operacionActual.isEmpty()) {
-                        // Si ya hay una operación, calcula el resultado parcial
-                        double segundoNumero = Double.parseDouble(cuadrado.getText().split(" ")[2]);
-                        primerNumero = realizarOperacion(primerNumero, segundoNumero, operacionActual);
-                    } else {
-                        // Guarda el número ingresado como el primer número
-                        primerNumero = Double.parseDouble(cuadrado.getText());
-                    }
+                    primerNumero = Double.parseDouble(cuadrado.getText());
                     operacionActual = textoBoton;
-                    cuadrado.setText(cuadrado.getText() + " " + textoBoton + " ");
+                    cuadrado.setText("");
                 } else if (textoBoton.equals("=")) { // Botón igual
-                    if (!operacionActual.isEmpty()) {
-                        double segundoNumero = Double.parseDouble(cuadrado.getText().split(" ")[2]);
-                        double resultado = realizarOperacion(primerNumero, segundoNumero, operacionActual);
-                        cuadrado.setText(String.valueOf(resultado));
-                        operacionActual = ""; // Reinicia la operación
-                    }
+                    double segundoNumero = Double.parseDouble(cuadrado.getText());
+                    double resultado = realizarOperacion(primerNumero, segundoNumero, operacionActual);
+                    cuadrado.setText(String.valueOf(resultado));
+                    operacionActual = "";
                 } else if (textoBoton.equals("Borrar")) { // Botón borrar
                     cuadrado.setText("");
                     operacionActual = "";
@@ -112,8 +147,6 @@ public class Lamina extends JPanel implements ActionListener {
             }
         }
     }
-    
-
 
     /** Realiza la operación matemática especificada. */
     private double realizarOperacion(double num1, double num2, String operacion) {
